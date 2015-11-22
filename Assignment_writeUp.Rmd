@@ -106,7 +106,9 @@ Similarly the in sample error from the trainng data was as follows
 confusionMatrix(myTrain$classe, predictTrain)
 ```
 
-The predicted sets of data , 20 0f them, were as follows:
+The predicted sets of data, which were all correct at the time of submission, 20 0f them, were as follows:
+ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+ B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
 
 ```{r, echo=FALSE}
 print(predictFinalTest)
