@@ -1,0 +1,113 @@
+---
+title: "Project-write-Up"
+author: "Maybin"
+date: "22 November 2015"
+output: html_document
+---
+
+This project presents a write up of the summary procedure in modeling a preditcor for the exercise data given at https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+and the tes data at https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+These data were loaded in R Studio and split the trainng data into 60% and 40% trainng and testing respectively
+This was to predict the 'classe' variable using any other variable to predict with
+
+```{r, echo=FALSE}
+# set working directory
+#setwd("C:/MIST/Training/Practical Machine Learning/Assignment")
+
+# set libraries
+library(caret)
+library(ggplot2)
+library(randomForest)
+
+#Input both training and test data
+# Remove all NA,#DIV/0!, NULL or ""
+train <- read.csv("pml-training.csv", header = TRUE)
+test  <- read.csv("pml-testing.csv",  header = TRUE)
+
+## Feature selection 1 : Remove all columns with NA, #DIV/0!, NULL or "" 
+
+train <- train[, !sapply(train, function(x) any(is.na(x) | x=="" | x=="NA" | x=="#DIV/0!"))]
+test  <-  test[, !sapply(test,  function(x) any(is.na(x) | x=="" | x=="NA" | x=="#DIV/0!"))]
+
+# See summary of stats
+## names(train)
+## str(train)
+## summary(train)
+## summary(train$classe) #To predict this 
+
+# Split Training AND Testing data, 60, 40%
+# To predict the 'classe' variable using any other variable to predict with
+
+inTrain <- createDataPartition(y=train$classe, p=0.6, list=FALSE)
+myTrain <- train[inTrain, ]
+myTest <- train[-inTrain, ]
+
+# Feature selection 2: Remove all variables not useful as predictors
+# or use myTest <- myTest[,8:length(myTest)]
+myTrain <- myTrain[, !names(myTrain) %in% c("X","user_name","cvtd_timestamp","raw_timestamp_part_1","raw_timestamp_part_2","new_window","num_window")]
+myTest <- myTest[, !names(myTest) %in% c("X","user_name","cvtd_timestamp","raw_timestamp_part_1","raw_timestamp_part_2","new_window","num_window")]
+
+
+## summary(myTrain)
+## summary(myTest) #To predict this 
+
+# Remove all variables with near zero variance
+nzv_train <- nearZeroVar(myTrain, saveMetrics = TRUE)
+# all nzv_train are FALSE, so non to remove
+
+# Use a predictor algorithm: Random Forest 
+set.seed(3233)
+trainMod <- randomForest(classe~., data = myTrain)
+print(trainMod)
+
+predictTest <- predict(trainMod, myTest, type = "class")
+
+
+predictTrain <- predict(trainMod, myTrain, type = "class")
+## confusionMatrix(myTrain$classe, predictTrain)
+
+# Apply to Test data set
+
+predictFinalTest<- predict(trainMod, test, type = "class")
+##print(predictFinalTest)
+
+
+
+
+```
+
+Feature selection was two stages
+In Feature selection 1 ,  We Removed all columns with NA,  containing DIV, and NULL
+
+In Feature selection 2, we Removed all variables not useful as predictors. These included X,username,cvtdtimestamp,rawtimestamppart1,rawtimestamppart2, newwindow and num_window
+
+A summary of the training and testing data is as follows:
+
+```{r}
+summary(myTrain)
+summary(myTest)
+
+```
+
+The next step was to remove variables with near zero variance. This process eliminates variables that do not have values that differ greatly and make a difference in the analysis of the prediction model. The function used was nearZeroVar
+
+For the prediction model, randomForests were chosen. The reason is that Random Forests are an ensemble decision trees, and perform well in situations where the data has few or no variances in the variables, simple to use, as a non-parametric method, and tends to be more accurate than other predictors.
+Before fitting the model, we used cross validation on the 60 percent training model and applied it on the 40 oercent testing data, results of confusion matrix for out of sample error as follows:
+
+```{r, echo=FALSE}
+confusionMatrix(myTest$classe, predictTest)
+```
+
+Similarly the in sample error from the trainng data was as follows
+
+```{r, echo=FALSE}
+confusionMatrix(myTrain$classe, predictTrain)
+```
+
+The predicted sets of data , 20 0f them, were as follows:
+
+```{r, echo=FALSE}
+print(predictFinalTest)
+```                        
